@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Fresh Mart",
+    "location": "123 Main Street, Springfield",
+    "contactNumber": "555-1234",
+    "openingHours": "8:00 AM - 8:00 PM"
+  },
+  {
+    "name": "Green Grocers",
+    "location": "456 Elm Street, Shelbyville",
+    "contactNumber": "555-5678",
+    "openingHours": "9:00 AM - 9:00 PM"
+  },
+  {
+    "name": "Daily Essentials",
+    "location": "789 Oak Avenue, Capital City",
+    "contactNumber": "555-9012",
+    "openingHours": "7:00 AM - 10:00 PM"
+  }
+]

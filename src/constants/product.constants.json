@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Apple",
+    "description": "Fresh red apples",
+    "store": "64b7f3c2e4b0f5a1d2c3e4f5",
+    "category": "Fruits",
+    "price": 1.5,
+    "discountPercentage": 10,
+    "stock": 100,
+    "sku": "APL-001",
+    "barcode": "1234567890123",
+    "images": ["apple1.jpg", "apple2.jpg"],
+    "tags": ["fruit", "fresh", "red"],
+    "isFeatured": true,
+    "status": "active",
+    "createdAt": "2023-01-01T00:00:00Z"
+  },
+  {
+    "name": "Banana",
+    "description": "Ripe yellow bananas",
+    "store": "64b7f3c2e4b0f5a1d2c3e4f5",
+    "category": "Fruits",
+    "price": 0.5,
+    "discountPercentage": 5,
+    "stock": 200,
+    "sku": "BAN-001",
+    "barcode": "1234567890124",
+    "images": ["banana1.jpg", "banana2.jpg"],
+    "tags": ["fruit", "ripe", "yellow"],
+    "isFeatured": true,
+    "status": "active",
+    "createdAt": "2023-01-01T00:00:00Z"
+  },
+  {
+    "name": "Milk",
+    "description": "1L whole milk",
+    "store": "64b7f3c2e4b0f5a1d2c3e4f5",
+    "category": "Dairy",
+    "price": 1.2,
+    "discountPercentage": 0,
+    "stock": 50,
+    "sku": "MLK-001",
+    "barcode": "1234567890125",
+    "images": ["milk1.jpg"],
+    "tags": ["dairy", "milk", "whole"],
+    "isFeatured": false,
+    "status": "active",
+    "createdAt": "2023-01-01T00:00:00Z"
+  }
+]
