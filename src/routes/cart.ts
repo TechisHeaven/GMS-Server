@@ -85,6 +85,15 @@ router.get(
             },
           },
           { $unwind: "$product" },
+          {
+            $lookup: {
+              from: "stores",
+              localField: "product.store",
+              foreignField: "_id",
+              as: "product.store",
+            },
+          },
+          { $unwind: "$product.store" },
         ])
         .toArray();
 

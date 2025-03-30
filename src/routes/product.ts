@@ -5,7 +5,96 @@ import { createError } from "../utils/error.utilts";
 import Product from "../models/Product";
 
 const router = express.Router();
+// Create a new product
+router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const productData = req.body;
 
+    // Validate required fields
+    if (!productData.name || !productData.store || !productData.price) {
+      throw createError(statusCodes.badRequest, "Missing required fields");
+    }
+
+    // Validate store ID
+    if (!mongoose.Types.ObjectId.isValid(productData.store)) {
+      throw createError(statusCodes.badRequest, "Invalid Store ID");
+    }
+
+    // Validate categories
+    if (
+      productData.categories &&
+      !Array.isArray(productData.categories) &&
+      productData.categories.some(
+        (category: any) =>
+          !category._id || !mongoose.Types.ObjectId.isValid(category._id)
+      )
+    ) {
+      throw createError(statusCodes.badRequest, "Invalid Category IDs");
+    }
+
+    const newProduct = await mongoose.connection
+      .collection("products")
+      .insertOne({
+        ...productData,
+        createdAt: new Date(),
+      });
+
+    res.status(statusCodes.created).json(newProduct);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update an existing product
+router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const productData = req.body;
+
+    // Validate product ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw createError(statusCodes.badRequest, "Invalid Product ID");
+    }
+
+    // Validate store ID if provided
+    if (
+      productData.store &&
+      !mongoose.Types.ObjectId.isValid(productData.store)
+    ) {
+      throw createError(statusCodes.badRequest, "Invalid Store ID");
+    }
+
+    // Validate categories if provided
+    if (
+      productData.categories &&
+      !Array.isArray(productData.categories) &&
+      productData.categories.some(
+        (category: any) =>
+          !category._id || !mongoose.Types.ObjectId.isValid(category._id)
+      )
+    ) {
+      throw createError(statusCodes.badRequest, "Invalid Category IDs");
+    }
+
+    console.log(id);
+
+    const updatedProduct = await mongoose.connection
+      .collection("products")
+      .findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(id) },
+        { $set: productData },
+        { returnDocument: "after" }
+      );
+
+    if (!updatedProduct) {
+      throw createError(statusCodes.notFound, "Product Not Found");
+    }
+
+    res.json(updatedProduct);
+  } catch (error) {
+    next(error);
+  }
+});
 // Product Fetch with Pagination and Filters
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -37,6 +126,47 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     next(error);
   }
 });
+
+// Fetch Multiple Products by IDs with Store Populate
+router.post(
+  "/by-ids",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { ids } = req.body;
+
+      if (
+        !Array.isArray(ids) ||
+        ids.some((id) => !mongoose.Types.ObjectId.isValid(id))
+      ) {
+        throw createError(statusCodes.badRequest, "Invalid Product IDs");
+      }
+
+      const products = await mongoose.connection
+        .collection("products")
+        .aggregate([
+          {
+            $match: {
+              _id: { $in: ids.map((id) => new mongoose.Types.ObjectId(id)) },
+            },
+          },
+          {
+            $lookup: {
+              from: "stores",
+              localField: "store",
+              foreignField: "_id",
+              as: "store",
+            },
+          },
+          { $unwind: "$store" },
+        ])
+        .toArray();
+
+      res.json(products);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 // Product Fetch with Id
 router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -303,6 +433,52 @@ router.get(
         .toArray();
 
       res.json(otherStoresProducts);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Search Products by Name, Categories, or Tags
+router.get(
+  "/search/product",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        query = "",
+        page = 1,
+        limit = 10,
+        sortBy = "createdAt",
+        order = "desc",
+      } = req.query;
+
+      const options = {
+        skip:
+          (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10),
+        limit: parseInt(limit as string, 10),
+        sort: { [sortBy as string]: order === "asc" ? 1 : -1 },
+      };
+
+      const searchQuery = query as string;
+
+      const filters = {
+        $or: [
+          { name: { $regex: searchQuery, $options: "i" } }, // Search by name (case-insensitive)
+          { "categories.name": { $regex: searchQuery, $options: "i" } }, // Search by category name
+          { tags: { $regex: searchQuery, $options: "i" } }, // Search by tags
+        ],
+        status: "active", // Ensure only active products are fetched
+      };
+
+      const products = await mongoose.connection
+        .collection("products")
+        .find(filters)
+        .sort([[sortBy as string, order === "asc" ? 1 : -1]])
+        .skip(options.skip)
+        .limit(options.limit)
+        .toArray();
+
+      res.json(products);
     } catch (error) {
       next(error);
     }

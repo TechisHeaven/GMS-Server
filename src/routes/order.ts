@@ -24,88 +24,191 @@ declare global {
 // });
 
 // Create order
+// router.post(
+//   "/",
+//   auth,
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//       const { userId } = req.user || {};
+//       const { store, customer, items, totalAmount, paymentMethod, notes } =
+//         req.body;
+
+//       if (
+//         !userId ||
+//         !store ||
+//         !customer ||
+//         !items ||
+//         !totalAmount ||
+//         !paymentMethod
+//       ) {
+//         return next(
+//           createError(statusCodes.badRequest, "Missing required fields")
+//         );
+//       }
+
+//       if (items.length <= 0)
+//         throw createError(statusCodes.badRequest, "Items are required");
+
+//       // Check if all product IDs in items exist in the products collection
+//       const productIds = items.map((item: { product: string }) => item.product);
+
+//       const existingProducts = await mongoose.connection
+//         .collection("products")
+//         .find({
+//           _id: {
+//             $in: productIds.map(
+//               (id: string) => new mongoose.Types.ObjectId(id)
+//             ),
+//           },
+//         })
+//         .toArray();
+
+//       if (existingProducts.length !== productIds.length) {
+//         throw createError(
+//           statusCodes.badRequest,
+//           "One or more products in the items do not exist"
+//         );
+//       }
+
+//       // Validate items structure
+//       if (
+//         !customer ||
+//         !customer.name ||
+//         !customer.phone ||
+//         typeof customer.name !== "string" ||
+//         typeof customer.phone !== "string"
+//       ) {
+//         return next(
+//           createError(statusCodes.badRequest, "Invalid customer structure")
+//         );
+//       }
+
+//       if (
+//         !Array.isArray(items) ||
+//         items.some((item) => !item.product || !item.quantity || !item.price)
+//       ) {
+//         return next(
+//           createError(statusCodes.badRequest, "Invalid items structure")
+//         );
+//       }
+
+//       const order = new Order({
+//         store,
+//         customer,
+//         items,
+//         totalAmount,
+//         paymentMethod,
+//         notes,
+//         paymentStatus: "pending", // Initial status before Razorpay verification
+//         createdAt: new Date(),
+//       });
+
+//       const result = await order.save();
+
+//       res.status(statusCodes.created).json(result);
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
+
 router.post(
   "/",
   auth,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.user || {};
-      const { store, customer, items, totalAmount, paymentMethod, notes } =
-        req.body;
+      const { orders } = req.body; // Expecting an array of orders
 
-      if (
-        !userId ||
-        !store ||
-        !customer ||
-        !items ||
-        !totalAmount ||
-        !paymentMethod
-      ) {
-        return next(
-          createError(statusCodes.badRequest, "Missing required fields")
-        );
+      if (!userId || !Array.isArray(orders) || orders.length === 0) {
+        return next(createError(statusCodes.badRequest, "Invalid order data"));
       }
 
-      if (items.length <= 0)
-        throw createError(statusCodes.badRequest, "Items are required");
+      const createdOrders = [];
 
-      // Check if all product IDs in items exist in the products collection
-      const productIds = items.map((item: { product: string }) => item.product);
+      for (const orderData of orders) {
+        const { store, customer, items, totalAmount, paymentMethod, notes } =
+          orderData;
 
-      const existingProducts = await mongoose.connection
-        .collection("products")
-        .find({
-          _id: {
-            $in: productIds.map(
-              (id: string) => new mongoose.Types.ObjectId(id)
-            ),
+        if (!store || !customer || !items || !totalAmount || !paymentMethod) {
+          throw createError(statusCodes.badRequest, "Missing required fields");
+        }
+
+        if (!Array.isArray(items) || items.length <= 0)
+          throw createError(statusCodes.badRequest, "Items are required");
+
+        // Validate products
+        const productIds = items.map(
+          (item) => new mongoose.Types.ObjectId(item.product)
+        );
+        const existingProducts = await mongoose.connection
+          .collection("products")
+          .find({
+            _id: { $in: productIds },
+            store: new mongoose.Types.ObjectId(store),
+          })
+          .toArray();
+
+        if (existingProducts.length !== productIds.length) {
+          throw createError(
+            statusCodes.badRequest,
+            "One or more products do not exist"
+          );
+        }
+
+        // Update product quantities
+        for (const item of items) {
+          const product = existingProducts.find(
+            (p) => p._id.toString() === item.product
+          );
+          if (!product) {
+            throw createError(
+              statusCodes.badRequest,
+              `Product with ID ${item.product} not found`
+            );
+          }
+
+          if (product.stock < item.quantity) {
+            throw createError(
+              statusCodes.badRequest,
+              `Insufficient quantity for product ${product.name}`
+            );
+          }
+
+          // Deduct the ordered quantity from the product's stock
+        }
+        const bulkUpdateOps = items.map((item) => ({
+          updateOne: {
+            filter: { _id: new mongoose.Types.ObjectId(item.product) },
+            update: { $inc: { stock: -item.quantity } },
           },
-        })
-        .toArray();
+        }));
+        await mongoose.connection
+          .collection("products")
+          .bulkWrite(bulkUpdateOps);
 
-      if (existingProducts.length !== productIds.length) {
-        throw createError(
-          statusCodes.badRequest,
-          "One or more products in the items do not exist"
-        );
+        // Create order
+        const order = new Order({
+          store,
+          customer: {
+            _id: new mongoose.Types.ObjectId(userId),
+            ...customer,
+          },
+          items,
+          totalAmount,
+          paymentMethod,
+          notes,
+          paymentStatus: "pending",
+          createdAt: new Date(),
+        });
+        const savedOrder = await order.save();
+        createdOrders.push(savedOrder);
       }
 
-      // Validate items structure
-      if (
-        !customer ||
-        !customer.name ||
-        !customer.phone ||
-        typeof customer.name !== "string" ||
-        typeof customer.phone !== "string"
-      ) {
-        return next(
-          createError(statusCodes.badRequest, "Invalid customer structure")
-        );
-      }
-
-      if (
-        !Array.isArray(items) ||
-        items.some((item) => !item.product || !item.quantity || !item.price)
-      ) {
-        return next(
-          createError(statusCodes.badRequest, "Invalid items structure")
-        );
-      }
-
-      const order = new Order({
-        store,
-        customer,
-        items,
-        totalAmount,
-        paymentMethod,
-        notes,
-        paymentStatus: "pending", // Initial status before Razorpay verification
-        createdAt: new Date(),
+      res.status(statusCodes.created).json({
+        message: "Orders placed successfully",
+        orders: createdOrders,
       });
-
-      const result = await order.save();
-
-      res.status(statusCodes.created).json(result);
     } catch (error) {
       next(error);
     }
@@ -124,17 +227,18 @@ router.get(
       if (!userId) {
         throw createError(statusCodes.badRequest, "User ID is required");
       }
-      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-        throw createError(statusCodes.badRequest, "Invalid ID");
-      }
 
       //   const order = await Order.findOne({
       //     _id: new mongoose.Types.ObjectId(id),
       //   }).populate("items.product");
+      const query = mongoose.Types.ObjectId.isValid(id)
+        ? { _id: new mongoose.Types.ObjectId(id) }
+        : { orderNumber: id };
+
       const order = await mongoose.connection
         .collection("orders")
         .aggregate([
-          { $match: { _id: new mongoose.Types.ObjectId(id) } },
+          { $match: query },
           {
             $lookup: {
               from: "products",
@@ -148,12 +252,12 @@ router.get(
               from: "stores",
               localField: "store",
               foreignField: "_id",
-              as: "storeDetails",
+              as: "store",
             },
           },
           {
             $unwind: {
-              path: "$storeDetails",
+              path: "$store",
               preserveNullAndEmptyArrays: true,
             },
           },
@@ -205,130 +309,59 @@ router.get(
           },
           {
             $lookup: {
-              from: "products",
-              localField: "items.product",
-              foreignField: "_id",
-              as: "items",
-            },
-          },
-          {
-            $lookup: {
               from: "stores",
               localField: "store",
               foreignField: "_id",
-              as: "storeDetails",
+              as: "store",
             },
           },
+          { $unwind: { path: "$store", preserveNullAndEmptyArrays: true } },
+
+          // Unwind items array so each item gets processed separately
+          { $unwind: "$items" },
+
+          // Lookup product details for each item
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.product",
+              foreignField: "_id",
+              as: "items.product",
+            },
+          },
+
+          // Unwind product array (each product should have only one match)
           {
             $unwind: {
-              path: "$storeDetails",
+              path: "$items.product",
               preserveNullAndEmptyArrays: true,
             },
           },
+
+          // Group back into a single document with items as an array
           {
-            $sort: sortOptions,
+            $group: {
+              _id: "$_id",
+              store: { $first: "$store" },
+              customer: { $first: "$customer" },
+              items: { $push: "$items" }, // Reconstructing items array
+              totalAmount: { $first: "$totalAmount" },
+              paymentMethod: { $first: "$paymentMethod" },
+              paymentStatus: { $first: "$paymentStatus" },
+              status: { $first: "$status" },
+              createdAt: { $first: "$createdAt" },
+              orderNumber: { $first: "$orderNumber" },
+              notes: { $first: "$notes" },
+            },
           },
-          {
-            $skip: skip,
-          },
-          {
-            $limit: Number(limit),
-          },
+
+          { $sort: sortOptions },
+          { $skip: skip },
+          { $limit: Number(limit) },
         ])
         .toArray();
 
       res.json(orders);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Generate Razorpay order ID
-router.post(
-  "/:id/create-payment",
-  auth,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
-
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw createError(statusCodes.badRequest, "Invalid order ID");
-      }
-
-      const order = await Order.findById(id);
-      if (!order) {
-        throw createError(statusCodes.notFound, "Order not found");
-      }
-
-      //   const razorpayOrder = await razorpay.orders.create({
-      //     amount: order.totalAmount * 100, // Convert to paise
-      //     currency: "INR",
-      //     receipt: order._id.toString(),
-      //     payment_capture: true,
-      //   });
-
-      //   const payment = new Payment({
-      //     orderId: order._id,
-      //     razorpayOrderId: razorpayOrder.id,
-      //   });
-
-      //   await payment.save();
-
-      const razorpayOrder = "";
-      res.json({ message: "Razorpay order created", razorpayOrder });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-// Verify Razorpay payment and update order status
-router.post(
-  "/:id/verify-payment",
-  auth,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
-      const { razorpayPaymentId, razorpayOrderId, razorpaySignature } =
-        req.body;
-
-      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-        throw createError(statusCodes.badRequest, "Invalid order ID");
-      }
-
-      const order = await Order.findById(id);
-      if (!order) {
-        throw createError(statusCodes.notFound, "Order not found");
-      }
-
-      const payment = await Payment.findOne({ razorpayOrderId });
-      if (!payment) throw createError(404, "Payment not found");
-
-      // Verify Razorpay Signature
-      const crypto = require("crypto");
-      const generatedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest("hex");
-
-      if (generatedSignature !== razorpaySignature) {
-        payment.status = "failed";
-        await payment.save();
-        throw createError(400, "Invalid Razorpay signature");
-      }
-
-      // Update payment and order status
-      payment.razorpayPaymentId = razorpayPaymentId;
-      payment.razorpaySignature = razorpaySignature;
-      payment.status = "completed";
-      await payment.save();
-
-      await Order.findByIdAndUpdate(payment.orderId, {
-        paymentStatus: "paid",
-      });
-
-      res.json({ message: "Payment verified successfully", order });
     } catch (error) {
       next(error);
     }

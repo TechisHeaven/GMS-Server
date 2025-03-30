@@ -1,7 +1,10 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
+import { auth } from "../middleware/auth";
+import { createError } from "../utils/error.utilts";
+import statusCodes from "../utils/status.utils";
 
 const router = express.Router();
 
@@ -13,33 +16,28 @@ router.post(
     body("password").isLength({ min: 6 }),
     body("fullName").notEmpty(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.array() });
-        return;
+        throw createError(statusCodes.badRequest, errors.array());
       }
 
       const {
         email,
         password,
         fullName,
-        role,
-      }: { email: string; password: string; fullName: string; role?: string } =
-        req.body;
+      }: { email: string; password: string; fullName: string } = req.body;
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        res.status(400).json({ message: "User already exists" });
-        return;
+        throw createError(statusCodes.badRequest, "User Already Exists");
       }
 
       const user = new User({
         email,
         password,
         fullName,
-        role: role || "vendor",
       });
 
       await user.save();
@@ -57,7 +55,7 @@ router.post(
         },
       });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      next(error);
     }
   }
 );
@@ -66,26 +64,23 @@ router.post(
 router.post(
   "/login",
   [body("email").isEmail().normalizeEmail(), body("password").notEmpty()],
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.array() });
-        return;
+        throw createError(statusCodes.badRequest, errors.array());
       }
 
       const { email, password }: { email: string; password: string } = req.body;
 
       const user = (await User.findOne({ email })) as any;
       if (!user) {
-        res.status(401).json({ message: "Invalid credentials" });
-        return;
+        throw createError(statusCodes.badRequest, "Invalid credentials");
       }
 
       const isMatch = await user.comparePassword(password);
       if (!isMatch) {
-        res.status(401).json({ message: "Invalid credentials" });
-        return;
+        throw createError(statusCodes.badRequest, "Invalid credentials");
       }
 
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
@@ -102,9 +97,38 @@ router.post(
         },
       });
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      next(error);
     }
   }
 );
+
+router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      throw createError(statusCodes.badRequest, "No token provided");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
+    const user = await User.findById(decoded.userId).select("-password");
+    if (!user) {
+      throw createError(statusCodes.notFound, "User not found");
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

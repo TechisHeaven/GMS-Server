@@ -79,7 +79,6 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// Fetch featured categories with pagination
 router.get(
   "/category/:id",
   async (req: Request, res: Response, next: NextFunction) => {
