@@ -17,69 +17,74 @@ const orderItemSchema = new mongoose.Schema({
   },
 });
 
-const orderSchema = new mongoose.Schema({
-  store: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Store",
-    required: true,
-  },
-  orderNumber: {
-    type: String,
-    unique: true,
-  },
-  customer: {
-    _id: {
+const orderSchema = new mongoose.Schema(
+  {
+    store: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
       required: true,
     },
-    name: {
+    orderNumber: {
+      type: String,
+      unique: true,
+    },
+    customer: {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      email: {
+        type: String,
+        required: true,
+      },
+      phone: String,
+      shippingAddress: {
+        type: String,
+        required: true,
+      },
+      billingAddress: String,
+    },
+    items: [orderItemSchema],
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: [
+        "pending",
+        "order_confirmed",
+        "being_packed",
+        "ready_for_pickup",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
+      default: "pending",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    paymentMethod: {
       type: String,
       required: true,
     },
-    email: {
-      type: String,
-      required: true,
+    notes: String,
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
-    phone: String,
-    shippingAddress: {
-      type: String,
-      required: true,
-    },
-    billingAddress: String,
   },
-  items: [orderItemSchema],
-  totalAmount: {
-    type: Number,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: [
-      "pending",
-      "order_confirmed",
-      "being_packed",
-      "ready_for_pickup",
-      "out_for_delivery",
-      "delivered",
-      "cancelled",
-    ],
-    default: "pending",
-  },
-  paymentStatus: {
-    type: String,
-    enum: ["pending", "paid", "failed"],
-    default: "pending",
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-  },
-  notes: String,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Generate order number before saving
 orderSchema.pre("save", async function (next) {

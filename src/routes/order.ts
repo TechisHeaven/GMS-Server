@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import statusCodes from "../utils/status.utils";
 import { createError } from "../utils/error.utilts";
-import { auth } from "../middleware/auth";
+import { adminAuth, auth } from "../middleware/auth";
 import Order from "../models/Order";
 import Razorpay from "razorpay";
 import Payment from "../models/Payment";
@@ -274,6 +274,65 @@ router.get(
     }
   }
 );
+// Fetch order By Id
+router.get(
+  "/:id/id/dashboard",
+  adminAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.user || {};
+      const { id } = req.params;
+
+      if (!userId) {
+        throw createError(statusCodes.badRequest, "User ID is required");
+      }
+
+      //   const order = await Order.findOne({
+      //     _id: new mongoose.Types.ObjectId(id),
+      //   }).populate("items.product");
+      const query = mongoose.Types.ObjectId.isValid(id)
+        ? { _id: new mongoose.Types.ObjectId(id) }
+        : { orderNumber: id };
+
+      const order = await mongoose.connection
+        .collection("orders")
+        .aggregate([
+          { $match: query },
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.product",
+              foreignField: "_id",
+              as: "items",
+            },
+          },
+          {
+            $lookup: {
+              from: "stores",
+              localField: "store",
+              foreignField: "_id",
+              as: "store",
+            },
+          },
+          {
+            $unwind: {
+              path: "$store",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ])
+        .toArray();
+
+      if (!order || order.length === 0) {
+        throw createError(statusCodes.notFound, "Order not found");
+      }
+
+      res.json(order[0]);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 // Fetch orders by user Id
 router.get(
@@ -307,6 +366,88 @@ router.get(
               "customer._id": new mongoose.Types.ObjectId(userId),
             },
           },
+          {
+            $lookup: {
+              from: "stores",
+              localField: "store",
+              foreignField: "_id",
+              as: "store",
+            },
+          },
+          { $unwind: { path: "$store", preserveNullAndEmptyArrays: true } },
+
+          // Unwind items array so each item gets processed separately
+          { $unwind: "$items" },
+
+          // Lookup product details for each item
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.product",
+              foreignField: "_id",
+              as: "items.product",
+            },
+          },
+
+          // Unwind product array (each product should have only one match)
+          {
+            $unwind: {
+              path: "$items.product",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+
+          // Group back into a single document with items as an array
+          {
+            $group: {
+              _id: "$_id",
+              store: { $first: "$store" },
+              customer: { $first: "$customer" },
+              items: { $push: "$items" }, // Reconstructing items array
+              totalAmount: { $first: "$totalAmount" },
+              paymentMethod: { $first: "$paymentMethod" },
+              paymentStatus: { $first: "$paymentStatus" },
+              status: { $first: "$status" },
+              createdAt: { $first: "$createdAt" },
+              orderNumber: { $first: "$orderNumber" },
+              notes: { $first: "$notes" },
+            },
+          },
+
+          { $sort: sortOptions },
+          { $skip: skip },
+          { $limit: Number(limit) },
+        ])
+        .toArray();
+
+      res.json(orders);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Dashboard Fetch Product
+router.get(
+  "/all/dashboard",
+  adminAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+      } = req.query;
+
+      const skip = (Number(page) - 1) * Number(limit);
+      const sortOptions: { [key: string]: 1 | -1 } = {
+        [sortBy as string]: sortOrder === "asc" ? 1 : -1,
+      };
+
+      const orders = await mongoose.connection
+        .collection("orders")
+        .aggregate([
           {
             $lookup: {
               from: "stores",

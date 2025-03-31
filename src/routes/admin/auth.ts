@@ -1,10 +1,11 @@
 import express, { NextFunction, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
-import User from "../models/User";
-import { auth } from "../middleware/auth";
-import { createError } from "../utils/error.utilts";
-import statusCodes from "../utils/status.utils";
+import { createError } from "../../utils/error.utilts";
+import statusCodes from "../../utils/status.utils";
+import Admin from "../../models/AdminUser";
+import { auth } from "../../middleware/auth";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -29,15 +30,16 @@ router.post(
         fullName,
       }: { email: string; password: string; fullName: string } = req.body;
 
-      const existingUser = await User.findOne({ email });
+      const existingUser = await Admin.findOne({ email });
       if (existingUser) {
         throw createError(statusCodes.badRequest, "User Already Exists");
       }
 
-      const user = new User({
+      const user = new Admin({
         email,
         password,
         fullName,
+        role: "user",
       });
 
       await user.save();
@@ -52,6 +54,7 @@ router.post(
           id: user._id,
           email: user.email,
           fullName: user.fullName,
+          role: "user",
         },
       });
     } catch (error) {
@@ -73,7 +76,7 @@ router.post(
 
       const { email, password }: { email: string; password: string } = req.body;
 
-      const user = (await User.findOne({ email })) as any;
+      const user = (await Admin.findOne({ email })) as any;
       if (!user) {
         throw createError(statusCodes.badRequest, "User doesn't exists.");
       }
@@ -93,6 +96,7 @@ router.post(
           id: user._id,
           email: user.email,
           fullName: user.fullName,
+          role: user.role,
         },
       });
     } catch (error) {
@@ -111,7 +115,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       userId: string;
     };
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await Admin.findById(decoded.userId).select("-password");
     if (!user) {
       throw createError(statusCodes.notFound, "User not found");
     }
@@ -121,6 +125,7 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
         id: user._id,
         email: user.email,
         fullName: user.fullName,
+        role: user.role,
         phoneNumber: user.phoneNumber,
         address: user.address,
       },
@@ -129,5 +134,46 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
     next(error);
   }
 });
+router.get(
+  "/store/me",
+  auth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.user as {
+        userId: string;
+      };
+
+      if (userId)
+        throw createError(statusCodes.badRequest, "UnAuthenticated User");
+
+      const user = await Admin.findById(userId).select("-password");
+      if (!user) {
+        throw createError(statusCodes.notFound, "User not found");
+      }
+
+      const store = await mongoose.connection
+        .collection("stores")
+        .aggregate([
+          { $match: { user: new mongoose.Types.ObjectId(userId) } },
+          {
+            $lookup: {
+              from: "stores",
+              localField: "store",
+              foreignField: "_id",
+              as: "store",
+            },
+          },
+          { $unwind: "$store" },
+        ])
+        .next();
+
+      res.json({
+        store,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default router;
