@@ -54,7 +54,7 @@ export const adminAuth = async (req: any, res: any, next: NextFunction) => {
       throw createError(statusCodes.unauthorized, "User not found");
     }
 
-    req.user = { userId: user._id };
+    req.user = { userId: user._id, storeId: user.store };
     next();
   } catch (error) {
     next(error);

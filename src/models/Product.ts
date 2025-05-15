@@ -18,10 +18,19 @@ const productSchema = new mongoose.Schema(
       ref: "Store",
       required: true,
     },
-    category: {
-      type: String,
-      required: true,
-    },
+    categories: [
+      {
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Category",
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
     price: {
       type: Number,
       required: true,
@@ -42,7 +51,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    barcode: String,
+    weight: {
+      type: Number,
+      required: true,
+    },
+    isFeatured: { type: Boolean, default: false },
     images: [String],
     tags: [String],
     status: {

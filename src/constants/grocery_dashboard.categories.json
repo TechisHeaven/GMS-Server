@@ -1,0 +1,60 @@
+[{
+  "_id": {
+    "$oid": "67e4de3bf41dafe8b5409f24"
+  },
+  "name": "Milk",
+  "description": "Milk Description",
+  "image": "./src/assets/milk.svg",
+  "isFeatured": true,
+  "createdAt": {
+    "$date": "2025-03-27T05:12:27.549Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67e4de56f41dafe8b5409f29"
+  },
+  "name": "Fruits",
+  "description": "Fruits Description",
+  "image": "./src/assets/fruits.svg",
+  "isFeatured": true,
+  "createdAt": {
+    "$date": "2025-03-27T05:12:54.255Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67e4de87f41dafe8b5409f31"
+  },
+  "name": "Snacks",
+  "description": "Snacks Description",
+  "image": "./src/assets/bread.svg",
+  "isFeatured": true,
+  "createdAt": {
+    "$date": "2025-03-27T05:13:43.746Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67e509d4ca5e11588f3ced0f"
+  },
+  "name": "Vegitables",
+  "description": "Vegitables Description",
+  "image": "./src/assets/broccoli-plant.svg",
+  "isFeatured": true,
+  "createdAt": {
+    "$date": "2025-03-27T08:18:28.487Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67e509eeca5e11588f3ced16"
+  },
+  "name": "Chicken",
+  "description": "Chicken Description",
+  "image": "./src/assets/chicken-legs.svg",
+  "isFeatured": true,
+  "createdAt": {
+    "$date": "2025-03-27T08:18:54.609Z"
+  }
+}]

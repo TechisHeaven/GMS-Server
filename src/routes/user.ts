@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import User from "../models/User";
 import { createError } from "../utils/error.utilts";
 import statusCodes from "../utils/status.utils";
+import { adminAuth, auth } from "../middleware/auth";
+import Order from "../models/Order";
 
 const router = express.Router();
 
@@ -66,6 +68,38 @@ router.put(
           phoneNumber: user.phoneNumber,
           address: user.address,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Fetch Customers Who Bought Products
+router.get(
+  "/customers",
+  adminAuth,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+
+      const storeId = user?.storeId;
+      if (!storeId) {
+        throw createError(statusCodes.badRequest, "Store ID not found");
+      }
+
+      const orders = await Order.find({ store: storeId }).populate("customer");
+      const customers = orders.map((order) => ({
+        id: order.customer?._id || null,
+        name: order.customer?.name || "Unknown Name",
+        email: order.customer?.email || "Unknown Email",
+        phone: order.customer?.phone || "Unknown Phone Number",
+        shippingAddress: order.customer?.shippingAddress || "Unknown Address",
+      }));
+
+      res.json({
+        message: "Customers fetched successfully",
+        customers,
       });
     } catch (error) {
       next(error);

@@ -35,6 +35,7 @@ const StoreSchema: Schema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
       required: true,
+      unique: true,
     },
     storeCode: {
       type: String,

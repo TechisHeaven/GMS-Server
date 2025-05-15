@@ -33,6 +33,10 @@ const adminAuthSchema = new mongoose.Schema(
       enum: ["store-owner", "user"],
       default: "user",
     },
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+    },
     createdAt: {
       type: Date,
       default: Date.now,

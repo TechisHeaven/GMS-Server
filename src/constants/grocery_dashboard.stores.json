@@ -1,0 +1,68 @@
+[{
+  "_id": {
+    "$oid": "67e3a351cdb151210997b62c"
+  },
+  "name": "Fresh Mart",
+  "location": "123 Main Street, Springfield",
+  "contactNumber": "555-1234",
+  "openingHours": "8:00 AM - 8:00 PM",
+  "rating": 8,
+  "description": "Fresh Mart Deliveries in 12 Minutes",
+  "image": "./crush-orange.png",
+  "banner": "https://imgs.search.brave.com/gbpOSQdaKFOOp35PO4vcG6KkwalUHejC9MK2cFUKE94/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/ZnJlZS1waG90by9v/cmFuZ2UtdGV4dHVy/ZV85NTY3OC03My5q/cGc_c2VtdD1haXNf/aHlicmlk",
+  "user": {
+    "$oid": "67ea1c5a67663f1c40239b65"
+  }
+},
+{
+  "_id": {
+    "$oid": "67e3a351cdb151210997b62d"
+  },
+  "name": "Green Grocers",
+  "location": "456 Elm Street, Shelbyville",
+  "contactNumber": "555-5678",
+  "openingHours": "9:00 AM - 9:00 PM",
+  "rating": 3,
+  "description": "Green Grocers Deliveries in 12 Minutes",
+  "banner": "https://imgs.search.brave.com/SZVa4uLcAdvMrmN59jtAIrgOsBERTBPYG18qKqKxo4s/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTE4/MjE4NDI5NS92ZWN0/b3IvYWJzdHJhY3Qt/YmFja2dyb3VuZC13/aXRoLWluLWJsdWUt/Z3JhZGllbnQuanBn/P3M9NjEyeDYxMiZ3/PTAmaz0yMCZjPTIt/bjNtbWtUSmRWVlM4/bHNwYTBqb2cwWEhJ/dnZZM3ptR3c0Z05r/LVUtQW89",
+  "image": "./now-delivery.png"
+},
+{
+  "_id": {
+    "$oid": "67e3a351cdb151210997b62e"
+  },
+  "name": "Daily Essentials",
+  "location": "789 Oak Avenue, Capital City",
+  "contactNumber": "555-9012",
+  "openingHours": "7:00 AM - 10:00 PM",
+  "description": "Daily Essentials Deliveries in 12 Minutes",
+  "rating": 4,
+  "banner": "https://imgs.search.brave.com/bJbvf5uthXNl3DzguHnI9XJ0BHhXRHVFwMLPOGv03xY/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/cHJlbWl1bS1waG90/by9ncmVlbi1wYXBl/ci10ZXh0dXJlLWJh/Y2tncm91bmRfNDU0/MDItNjcuanBnP3Nl/bXQ9YWlzX2h5YnJp/ZA",
+  "image": "./quality-product.png"
+},
+{
+  "_id": {
+    "$oid": "67ea36ab265f9a5471f8c8ea"
+  },
+  "name": "Reliance Fresh",
+  "type": "grocery",
+  "location": null,
+  "openingTime": "12:03",
+  "closingTime": "12:05",
+  "contactNumber": "1212123232",
+  "rating": null,
+  "description": "Reliance Fresh Description",
+  "image": null,
+  "banner": null,
+  "user": {
+    "$oid": "67ea1c5a67663f1c40239b65"
+  },
+  "storeCode": "EC34CC",
+  "createdAt": {
+    "$date": "2025-03-31T06:31:07.639Z"
+  },
+  "updatedAt": {
+    "$date": "2025-03-31T06:31:07.639Z"
+  },
+  "__v": 0
+}]

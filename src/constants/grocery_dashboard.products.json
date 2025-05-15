@@ -1,41 +1,5 @@
 [{
   "_id": {
-    "$oid": "67e384e4cdb151210997b623"
-  },
-  "name": "Apple",
-  "description": "Fresh red apples",
-  "store": {
-    "$oid": "67e3a351cdb151210997b62c"
-  },
-  "categories": [
-    {
-      "_id": {
-        "$oid": "67e4de56f41dafe8b5409f29"
-      },
-      "name": "Fruits"
-    }
-  ],
-  "price": 150.2,
-  "discountPercentage": 10,
-  "stock": 100,
-  "sku": "APL-001",
-  "barcode": "1234567890123",
-  "images": [
-    "https://images.unsplash.com/photo-1579613832125-5d34a13ffe2a?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1630563451961-ac2ff27616ab?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-  ],
-  "tags": [
-    "fruit",
-    "fresh",
-    "red"
-  ],
-  "status": "active",
-  "createdAt": "2023-01-01T00:00:00Z",
-  "isFeatured": true,
-  "weight": 1000
-},
-{
-  "_id": {
     "$oid": "67e384e4cdb151210997b624"
   },
   "name": "Banana",
@@ -53,7 +17,7 @@
   ],
   "price": 50,
   "discountPercentage": 5,
-  "stock": 200,
+  "stock": 199,
   "sku": "BAN-001",
   "barcode": "1234567890124",
   "images": [
@@ -76,7 +40,9 @@
   },
   "name": "Milk",
   "description": "1L whole milk",
-  "store": "64b7f3c2e4b0f5a1d2c3e4f5",
+  "store": {
+    "$oid": "67e3a351cdb151210997b62e"
+  },
   "categories": [
     {
       "_id": {
@@ -101,5 +67,113 @@
   "status": "active",
   "createdAt": "2023-01-01T00:00:00Z",
   "isFeatured": false,
+  "weight": 400
+},
+{
+  "_id": {
+    "$oid": "67e52bb972b5a31e3c61cecd"
+  },
+  "name": "Apple",
+  "description": "Fresh red apples in other store",
+  "store": {
+    "$oid": "67e3a351cdb151210997b62d"
+  },
+  "categories": [
+    {
+      "_id": {
+        "$oid": "67e4de56f41dafe8b5409f29"
+      },
+      "name": "Fruits"
+    }
+  ],
+  "price": 120.26,
+  "discountPercentage": 10,
+  "stock": 97,
+  "sku": "APL-001",
+  "barcode": "1234567890123",
+  "images": [
+    "https://images.unsplash.com/photo-1590005354167-6da97870c757?q=80&w=2081&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1630563451961-ac2ff27616ab?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+  ],
+  "tags": [
+    "fruit",
+    "fresh",
+    "red"
+  ],
+  "status": "active",
+  "createdAt": "2023-01-01T00:00:00Z",
+  "isFeatured": true,
+  "weight": 1000,
+  "quantity": -1
+},
+{
+  "_id": {
+    "$oid": "67e52ebc72b5a31e3c61ced0"
+  },
+  "name": "Fresh Banana",
+  "description": "Ripe yellow bananas on other store",
+  "store": {
+    "$oid": "67e3a351cdb151210997b62e"
+  },
+  "categories": [
+    {
+      "_id": {
+        "$oid": "67e4de56f41dafe8b5409f29"
+      },
+      "name": "Fruits"
+    }
+  ],
+  "price": 45,
+  "discountPercentage": 5,
+  "stock": 198,
+  "sku": "BAN-001",
+  "barcode": "1234567890124",
+  "images": [
+    "https://images.unsplash.com/photo-1528825871115-3581a5387919?q=80&w=2030&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1481349518771-20055b2a7b24?q=80&w=2139&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+  ],
+  "tags": [
+    "fruit",
+    "ripe",
+    "yellow"
+  ],
+  "status": "active",
+  "createdAt": "2023-01-01T00:00:00Z",
+  "isFeatured": true,
+  "weight": 1000
+},
+{
+  "_id": {
+    "$oid": "67e5310972b5a31e3c61ced6"
+  },
+  "name": "Milk Low Fat",
+  "description": "1L low fat milk",
+  "store": {
+    "$oid": "67e3a351cdb151210997b62c"
+  },
+  "categories": [
+    {
+      "_id": {
+        "$oid": "67e4de3bf41dafe8b5409f24"
+      },
+      "name": "Milk"
+    }
+  ],
+  "price": 32,
+  "discountPercentage": 0,
+  "stock": 41,
+  "sku": "MLK-001",
+  "barcode": "1234567890125",
+  "images": [
+    "https://images.unsplash.com/photo-1634141510639-d691d86f47be?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+  ],
+  "tags": [
+    "dairy",
+    "milk",
+    "whole"
+  ],
+  "status": "active",
+  "createdAt": "2023-01-01T00:00:00Z",
+  "isFeatured": true,
   "weight": 400
 }]

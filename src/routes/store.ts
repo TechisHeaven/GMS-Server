@@ -96,6 +96,7 @@ router.post(
         Admin.findOneAndUpdate(
           { _id: userId },
           {
+            store: newStore._id,
             role: "store-owner",
           }
         ),
