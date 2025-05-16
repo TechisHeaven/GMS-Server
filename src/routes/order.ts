@@ -334,6 +334,58 @@ router.get(
   }
 );
 
+router.put(
+  "/:id/status",
+  adminAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        throw createError(statusCodes.badRequest, "Invalid order ID");
+      }
+
+      if (!status || typeof status !== "string") {
+        throw createError(statusCodes.badRequest, "Status is required");
+      }
+      const allowedStatuses = [
+        "pending",
+        "order_confirmed",
+        "being_packed",
+        "ready_for_pickup",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ];
+
+      if (!allowedStatuses.includes(status)) {
+        throw createError(
+          statusCodes.badRequest,
+          `Invalid status. Allowed statuses are: ${allowedStatuses.join(", ")}`
+        );
+      }
+
+      const updatedOrder = await Order.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true }
+      );
+
+      if (!updatedOrder) {
+        throw createError(statusCodes.notFound, "Order not found");
+      }
+
+      res.json({
+        message: "Order status updated successfully",
+        order: updatedOrder,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // Fetch orders by user Id
 router.get(
   "/",
@@ -427,7 +479,7 @@ router.get(
   }
 );
 
-// Dashboard Fetch Product
+// Dashboard Fetch Orders
 router.get(
   "/all/dashboard",
   adminAuth,
@@ -439,15 +491,22 @@ router.get(
         sortBy = "createdAt",
         sortOrder = "desc",
       } = req.query;
+      const { storeId } = req.user as { userId: string; storeId: string };
 
       const skip = (Number(page) - 1) * Number(limit);
       const sortOptions: { [key: string]: 1 | -1 } = {
         [sortBy as string]: sortOrder === "asc" ? 1 : -1,
       };
 
+      console.log("Store Id: ", storeId);
       const orders = await mongoose.connection
         .collection("orders")
         .aggregate([
+          {
+            $match: {
+              store: new mongoose.Types.ObjectId(storeId),
+            },
+          },
           {
             $lookup: {
               from: "stores",

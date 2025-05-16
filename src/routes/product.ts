@@ -90,13 +90,21 @@ router.put(
         throw createError(statusCodes.badRequest, "Invalid Category IDs");
       }
 
-      const updatedProduct = await mongoose.connection
-        .collection("products")
-        .findOneAndUpdate(
-          { _id: new mongoose.Types.ObjectId(id) },
-          { $set: productData },
-          { returnDocument: "after" }
+      // If categories are provided, convert their _id to ObjectId
+      if (productData.categories && Array.isArray(productData.categories)) {
+        productData.categories = productData.categories.map(
+          (category: any) => ({
+            ...category,
+            _id: new mongoose.Types.ObjectId(category._id),
+          })
         );
+      }
+
+      const updatedProduct = await Product.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(id) },
+        { $set: productData },
+        { returnDocument: "after" }
+      );
 
       if (!updatedProduct) {
         throw createError(statusCodes.notFound, "Product Not Found");

@@ -87,15 +87,50 @@ router.get(
       if (!storeId) {
         throw createError(statusCodes.badRequest, "Store ID not found");
       }
-
+      // Fetch all orders for the store and populate customer
       const orders = await Order.find({ store: storeId }).populate("customer");
-      const customers = orders.map((order) => ({
-        id: order.customer?._id || null,
-        name: order.customer?.name || "Unknown Name",
-        email: order.customer?.email || "Unknown Email",
-        phone: order.customer?.phone || "Unknown Phone Number",
-        shippingAddress: order.customer?.shippingAddress || "Unknown Address",
-      }));
+
+      // Map to store unique customers and aggregate their data
+      const customerMap = new Map<
+        string,
+        {
+          id: any;
+          name: string;
+          email: string;
+          phone: string;
+          shippingAddress: string;
+          lastPurchased: Date;
+          totalAmountRevenue: number;
+        }
+      >();
+
+      for (const order of orders) {
+        const customer = order.customer;
+        if (!customer || !customer._id) continue;
+        const customerId = customer._id.toString();
+
+        if (!customerMap.has(customerId)) {
+          customerMap.set(customerId, {
+            id: customer._id,
+            name: customer.name || "Unknown Name",
+            email: customer.email || "Unknown Email",
+            phone: customer.phone || "Unknown Phone Number",
+            shippingAddress: customer.shippingAddress || "Unknown Address",
+            lastPurchased: order.createdAt,
+            totalAmountRevenue: order.totalAmount,
+          });
+        } else {
+          const entry = customerMap.get(customerId)!;
+          // Update lastPurchased if this order is newer
+          if (order.createdAt > entry.lastPurchased) {
+            entry.lastPurchased = order.createdAt;
+          }
+          // Add to totalAmountRevenue
+          entry.totalAmountRevenue += order.totalAmount;
+        }
+      }
+
+      const customers = Array.from(customerMap.values());
 
       res.json({
         message: "Customers fetched successfully",
