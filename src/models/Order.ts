@@ -76,6 +76,10 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     notes: String,
+    deliveryPerson: {
+      type: mongoose.Schema.Types.ObjectId,
+      defualt: null,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

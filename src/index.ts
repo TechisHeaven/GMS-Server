@@ -12,6 +12,8 @@ import cartRoutes from "./routes/cart";
 import orderRoutes from "./routes/order";
 import storeRoutes from "./routes/store";
 import categoriesRoutes from "./routes/categories";
+import deliveryAuthRoutes from "./routes/delivery/auth";
+import deliveryOrderRoutes from "./routes/delivery/order";
 // import orderRoutes from "./src/routes/auth.ts";
 // import userRoutes from "./src/routes/auth.ts";
 
@@ -33,6 +35,9 @@ app.use("/api/carts", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/categories", categoriesRoutes);
+
+app.use("/api/delivery/auth", deliveryAuthRoutes);
+app.use("/api/delivery/orders", deliveryOrderRoutes);
 
 // Error handler middleware
 app.use(errorHandler);

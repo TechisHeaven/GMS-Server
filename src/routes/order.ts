@@ -498,7 +498,6 @@ router.get(
         [sortBy as string]: sortOrder === "asc" ? 1 : -1,
       };
 
-      console.log("Store Id: ", storeId);
       const orders = await mongoose.connection
         .collection("orders")
         .aggregate([
