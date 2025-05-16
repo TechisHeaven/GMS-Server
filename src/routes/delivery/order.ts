@@ -257,12 +257,32 @@ router.put(
         }
       }
 
-      // Update the order status and deliveryPerson
+      // Prepare update fields
+      const updateFields: any = { status };
+
+      if (status === "out_for_delivery") {
+        updateFields.deliveryPerson = userId;
+      }
+      if (status === "delivered") {
+        updateFields.paymentStatus = "paid";
+      }
+      if (status === "cancelled") {
+        updateFields.paymentStatus = "failed";
+      }
+
+      //   // Update the order status and deliveryPerson/paymentStatus as needed
       const updatedOrder = await Order.findByIdAndUpdate(
         id,
-        { status, deliveryPerson: userId },
+        { $set: updateFields },
         { new: true }
       );
+
+      // Update the order status and deliveryPerson
+      //   const updatedOrder = await Order.findByIdAndUpdate(
+      //     id,
+      //     { status, deliveryPerson: userId },
+      //     { new: true }
+      //   );
 
       if (!updatedOrder) {
         throw createError(statusCodes.notFound, "Order not found");
